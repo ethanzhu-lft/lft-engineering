@@ -97,6 +97,15 @@ summary{cursor:pointer;font-weight:700;color:var(--accent)}
 .card h3{margin:0;font-size:17px} .card p{font-size:14.5px;color:var(--muted)}
 .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .toast{text-align:center;font-size:13px;color:var(--good);min-height:1.2em}
+.follow{display:flex;flex-direction:column;gap:14px;align-items:center;text-align:center}
+.follow .cta{font-family:var(--f-display);font-weight:900;font-size:19px;line-height:1.5;text-wrap:balance}
+.links{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%}
+.links a{display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--ink);text-decoration:none;font-size:13px;font-weight:700;padding:10px 4px;border-radius:6px}
+.links a:hover .ic,.links a:focus-visible .ic{transform:translateY(-2px)}
+.links a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.ic{width:60px;height:60px;border-radius:14px;display:grid;place-items:center;border:1.5px solid var(--ink);box-shadow:3px 3px 0 var(--ink);transition:transform .1s;overflow:hidden;background:var(--card);color:var(--ink)}
+.ic img{width:100%;height:100%;display:block}
+.ic svg{width:30px;height:30px}
 .sources{font-size:12.5px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
 .sources a{color:var(--muted);word-break:break-all}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -151,6 +160,15 @@ const STAGES = [
       D:"資訊很多，但沒有結構，立場、證據與訴求混在一起。讀的人要花很大力氣才能找到重點，甚至不確定報告者到底要什麼。"},
     take:"表達不是把話說得很有把握，而是讓對方看清楚狀況、你的立場、你的理由，以及他需要做什麼決定。", note:"註：此情境改編自 1986 年挑戰者號事故的決策過程。" }
 ];
+const CTAS = [
+  "想練習更多思辨？追蹤我們！",
+  "快來認識我們！",
+  "想知道思辨還能怎麼應用？追蹤我們！",
+  "想知道 LFT 還有哪些活動，快來獲取活動資訊！",
+  "喜歡這 3 分鐘嗎？來看看我們還在做什麼！",
+  "想看更多像這樣的小練習？追蹤我們！"
+];
+const LOGO = "data:image/png;base64,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";
 const Q2 = ["很有幫助","有一點幫助","不太確定","沒有幫助"];
 const Q3 = ["研究或專題的方向判斷","寫報告、做簡報、講解成果","團隊合作與溝通","求職面試","日常做決定"];
 const SEGS = ["問卷","目標","邏輯","表達","結果"];
@@ -269,6 +287,14 @@ const screens = {
       <p class="take">思辨不只是文組的事。工程師每天都在做目標判斷、檢查前提、與人溝通，這些正是思辨在做的事。</p>
       <div class="actions"><button class="btn ghost" id="share">分享這個體驗</button><button class="btn" id="home">回到首頁</button></div>
       <p class="toast" id="toast"></p>
+    </div>
+    <div class="sheet follow" style="margin-top:16px">
+      <p class="cta">${CTAS[Math.floor(Math.random()*CTAS.length)]}</p>
+      <div class="links">
+        <a href="https://www.leadfortaiwan.org/" target="_blank" rel="noopener"><span class="ic"><img src="${LOGO}" alt=""></span>官網</a>
+        <a href="https://www.instagram.com/leadfortaiwan/" target="_blank" rel="noopener"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.2" r="3.6"/></svg></span>Instagram</a>
+        <a href="https://lin.ee/OlX9yDX" target="_blank" rel="noopener"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11c0-3.9 3.6-7 8-7s8 3.1 8 7-3.6 7-8 7c-.9 0-1.7-.1-2.5-.3L6 20l.6-3.4C5 15.3 4 13.3 4 11z"/><path d="M8.5 10.5h.01M12 10.5h.01M15.5 10.5h.01" stroke-width="2.6"/></svg></span>官方 LINE</a>
+      </div>
     </div>
     <div class="sources" style="margin-top:16px">
       <strong>資料來源</strong>
