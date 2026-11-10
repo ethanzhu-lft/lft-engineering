@@ -75,8 +75,8 @@ input[type=text]{width:100%;font:inherit;font-size:17px;padding:13px 14px;border
 .hint{font-size:13px;color:var(--muted)}
 .cloud{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px 14px;padding:22px 10px;min-height:150px;border:1.5px dashed var(--line);border-radius:6px}
 .cloud span{font-family:var(--f-display);font-weight:700;line-height:1.2;color:var(--ink);animation:pop .4s ease both}
-.cloud span.me{color:var(--accent)}
 .cloud span:nth-child(3n){color:var(--muted)}
+.cloud span.me,.cloud span.me:nth-child(3n){color:var(--accent)}
 @keyframes pop{from{transform:scale(.6);opacity:.2}to{transform:none;opacity:1}}
 .verdict{border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:8px;border:1.5px solid}
 .verdict.good{background:var(--good-bg);border-color:var(--good)} .verdict.bad{background:var(--warn-bg);border-color:var(--warn)}
@@ -314,7 +314,21 @@ async function fillCloud(){
   const list = remote ? remote.slice() : localWords();
   if(remote) list.push(state.q1);
   const mine = new Set(tokens([state.q1]).map(([t])=>t));
-  const toks = tokens(list);
+  let toks = tokens(list);
+  
+  // 確保使用者自己的所有詞彙都會被顯示（即使頻率不夠高）
+  mine.forEach(t => {
+    if(!toks.some(([token]) => token === t)) {
+      let count = 0;
+      list.forEach(a => {
+        const terms = String(a).split(/[，,、。；;\s\/]+/).map(x=>x.trim()).filter(x=>x && x.length<=20);
+        if(terms.includes(t)) count++;
+      });
+      toks.push([t, count]);
+    }
+  });
+  toks.sort((a,b) => b[1] - a[1]);
+  
   const max = Math.max(...toks.map(t=>t[1]),1);
   const box = document.getElementById("cloud"); if(!box) return;
   box.innerHTML = "";
