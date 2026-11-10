@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>思辨，工程師的工具</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+</head><body>
+<style>
+/* Layout: one narrow column on engineering graph paper; each screen is a lab-notebook page with a stage strip on top. */
+:root{
+  --paper:#F1F4EE; --grid:#DCE4D8; --card:#FFFFFF; --line:#C8D1C4;
+  --ink:#16213A; --muted:#556079; --accent:#2B47D9; --accent-ink:#FFFFFF;
+  --good:#17865A; --good-bg:#E3F4EB; --warn:#C0521C; --warn-bg:#FBEADF;
+  --hi:#FFE55C;
+  --f-display:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0F141D; --grid:#19212E; --card:#161D29; --line:#2A3445;
+  --ink:#E7ECF6; --muted:#9BA6BD; --accent:#8095FF; --accent-ink:#0F141D;
+  --good:#52CC93; --good-bg:#15302A; --warn:#F28C57; --warn-bg:#36211A;
+  --hi:#6A5A10; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --paper:#0F141D; --grid:#19212E; --card:#161D29; --line:#2A3445;
+  --ink:#E7ECF6; --muted:#9BA6BD; --accent:#8095FF; --accent-ink:#0F141D;
+  --good:#52CC93; --good-bg:#15302A; --warn:#F28C57; --warn-bg:#36211A;
+  --hi:#6A5A10; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;
+  color:var(--ink); font-family:var(--f-body); font-size:16px; line-height:1.7;
+  min-height:100vh;
+}
+.wrap{max-width:560px;margin:0 auto;padding-block:20px 48px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:20px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;color:var(--muted)}
+.brand{font-weight:600;color:var(--ink)}
+.strip{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.seg{display:flex;flex-direction:column;gap:4px;font-family:var(--f-mono);font-size:11px;color:var(--muted);min-width:0}
+.seg i{display:block;height:6px;border-radius:2px;background:var(--line)}
+.seg.done i{background:var(--ink)} .seg.now i{background:var(--accent)} .seg.now{color:var(--accent);font-weight:600}
+h1,h2{font-family:var(--f-display);font-weight:900;text-wrap:balance;margin:0;line-height:1.3}
+h1{font-size:clamp(30px,8vw,42px)} h2{font-size:clamp(22px,5.6vw,28px)}
+.mark{background:linear-gradient(transparent 55%,var(--hi) 55%);padding:0 2px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;color:var(--accent);font-weight:600}
+p{margin:0} .muted{color:var(--muted)}
+.sheet{background:var(--card);border:1.5px solid var(--ink);border-radius:6px;padding:20px;display:flex;flex-direction:column;gap:14px;box-shadow:4px 4px 0 var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);border-radius:3px;padding:2px 8px;color:var(--muted);background:var(--card)}
+.btn{appearance:none;border:1.5px solid var(--ink);background:var(--accent);color:var(--accent-ink);font:700 17px/1 var(--f-body);padding:15px 20px;border-radius:6px;cursor:pointer;width:100%;box-shadow:3px 3px 0 var(--ink);transition:transform .08s,box-shadow .08s}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+.btn.ghost{background:var(--card);color:var(--ink)}
+.btn:focus-visible,.opt:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{appearance:none;display:grid;grid-template-columns:32px 1fr;gap:12px;align-items:start;text-align:left;width:100%;
+  background:var(--card);color:var(--ink);border:1.5px solid var(--line);border-radius:6px;padding:12px 14px;font:inherit;font-size:15.5px;line-height:1.6;cursor:pointer}
+.opt span{min-width:0}
+.opt b{display:grid;place-items:center;width:32px;height:32px;border:1.5px solid var(--ink);border-radius:4px;font-family:var(--f-mono);font-size:14px}
+.opt[aria-pressed="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--card))}
+.opt[aria-pressed="true"] b{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.opt.good{border-color:var(--good);background:var(--good-bg)} .opt.good b{background:var(--good);color:var(--card);border-color:var(--good)}
+.opt.bad{border-color:var(--warn);background:var(--warn-bg)} .opt.bad b{background:var(--warn);color:var(--card);border-color:var(--warn)}
+.opt.dim{opacity:.55}
+.opt:disabled{cursor:default}
+.field{display:flex;flex-direction:column;gap:8px}
+.field label{font-weight:700}
+input[type=text]{width:100%;font:inherit;font-size:17px;padding:13px 14px;border:1.5px solid var(--ink);border-radius:6px;background:var(--card);color:var(--ink)}
+.hint{font-size:13px;color:var(--muted)}
+.cloud{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px 14px;padding:22px 10px;min-height:150px;border:1.5px dashed var(--line);border-radius:6px}
+.cloud span{font-family:var(--f-display);font-weight:700;line-height:1.2;color:var(--ink);animation:pop .4s ease both}
+.cloud span.me{color:var(--accent)}
+.cloud span:nth-child(3n){color:var(--muted)}
+@keyframes pop{from{transform:scale(.6);opacity:.2}to{transform:none;opacity:1}}
+.verdict{border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:8px;border:1.5px solid}
+.verdict.good{background:var(--good-bg);border-color:var(--good)} .verdict.bad{background:var(--warn-bg);border-color:var(--warn)}
+.stamp{font-family:var(--f-mono);font-weight:600;font-size:13px;letter-spacing:.06em}
+.verdict.good .stamp{color:var(--good)} .verdict.bad .stamp{color:var(--warn)}
+details{border-top:1px solid var(--line);padding-top:12px}
+summary{cursor:pointer;font-weight:700;color:var(--accent)}
+.compare{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.row{display:grid;grid-template-columns:32px 1fr;gap:10px;font-size:14.5px}
+.row b{display:grid;place-items:center;width:28px;height:28px;border-radius:4px;font-family:var(--f-mono);font-size:13px;color:var(--card)}
+.row.good b{background:var(--good)} .row.bad b{background:var(--warn)}
+.row div{min-width:0}
+.take{font-family:var(--f-display);font-weight:900;font-size:19px;line-height:1.55}
+.note{font-size:13px;color:var(--muted)}
+.cards{display:grid;gap:12px}
+.card{background:var(--card);border:1.5px solid var(--ink);border-radius:6px;padding:16px;display:grid;grid-template-columns:auto 1fr;gap:4px 14px}
+.card .k{grid-row:span 2;font-family:var(--f-display);font-weight:900;font-size:26px;color:var(--accent);writing-mode:vertical-rl;letter-spacing:.1em}
+.card h3{margin:0;font-size:17px} .card p{font-size:14.5px;color:var(--muted)}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.toast{text-align:center;font-size:13px;color:var(--good);min-height:1.2em}
+.sources{font-size:12.5px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+.sources a{color:var(--muted);word-break:break-all}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+  <div class="top"><span class="brand">LEAD FOR TAIWAN</span><span id="clock">思辨實驗室</span></div>
+  <div class="strip" id="strip" aria-label="進度"></div>
+  <main id="app" aria-live="polite"></main>
+</div>
+
+<script>
+/* 若之後自行架站並設定 Google Apps Script，把網址填在這裡即可收集問卷與共享文字雲 */
+const CONFIG = { endpoint: "https://script.google.com/macros/s/AKfycbzcNxlNAQJ04iAxVHrJKw59KU5uY9AFHgij11nOGfrVeuSbpMa9A9S8gjt7LAkb_UC4/exec" };
+
+const STAGES = [
+  { tag:"目標", title:"你是電動車比賽團隊的顧問",
+    scenario:"LFT 車隊準備參加一場電動車比賽。有三週時間準備，身為一個電動車顧問，你會建議從哪裡開始？",
+    question:"",
+    options:{A:"建議提升馬達效率",B:"建議先看前幾屆的冠軍車，找出他們的做法來模仿",C:"確認比賽怎麼計分、哪個指標最能決定成績",D:"要他們彼此討論，每個人說說自己覺得重要的地方"},
+    good:"C",
+    feedback:{
+      A:"他們很快進入了行動，但沒有確認比賽比的是不是馬達效率，他們最終沒有得名。",
+      B:"模仿成功的做法很有參考價值！但前幾屆的條件和這一屆的不同，他們最後沒有得名。",
+      C:"他們先確認了目標，把大量時間投入在這一屆評分標準的輪胎滾阻與車身空氣阻力上，最後得了第一名。你的建議幫助了他們！",
+      D:"討論讓他們收集了隊員的不同想法，但他們忘記定義這場比賽的目標，最終沒有得名。"},
+    take:"思辨，讓我們先錨定做一件事的目標，知道應該投入時間精力在哪裡。", note:"" },
+  { tag:"邏輯", title:"放射線治療機",
+    scenario:"一間醫院新採購了一台放射線治療機。前一代機型用了好幾年都很安全，新版本則移除了原本的硬體安全裝置，改由軟體負責檢查。工程團隊測試時，操作流程都正常，沒有異常，因此認為系統很可靠。",
+    question:"你要如何判斷這套系統是否安全？",
+    options:{A:"測試都沒出事，代表系統很可靠，可以上線",B:"沿用前代的軟體，前代用了很多年都沒問題，所以新版也一樣安全",C:"檢查原本的安全機制是什麼，移除硬體後哪些保護已經不存在，再重新驗證軟體",D:"請操作人員回報使用感受，如果大家都說順手，就代表安全"},
+    good:"C",
+    feedback:{
+      A:"沒有出事，不代表沒有危險。測試可能沒有碰到會觸發錯誤的操作順序。",
+      B:"前代的安全靠的是硬體防護，軟體本身並沒有被單獨驗證過。防護的方式改變了，原本的前提就不成立。",
+      C:"你找到了安全前提改變的地方。真實的 Therac-25 就是這樣：移除硬體聯鎖後，系統依賴的軟體在特定操作時序下出錯，導致至少六起過量輻射的事故。",
+      D:"操作人員的感受很重要，但不能取代系統驗證。事故中的錯誤是在特定操作順序下才會出現，日常使用未必碰得到。"},
+    take:"思辨，讓我們檢查結論背後的前提，看它還成不成立。", note:"註：此情境改編自 Therac-25 事故（1985 至 1987 年間）。" },
+  { tag:"表達", title:"發射前的決策報告",
+    scenario:"你是發射前準備會議的報告者。工程團隊的分析指出，在低溫環境下，一個密封用的 O 型環可能失去彈性，無法有效密封。你需要寫一段給決策者的說明。",
+    question:"你會怎麼寫？",
+    options:{
+      A:"「O 型環在低溫下可能失去彈性，過去有侵蝕紀錄，工程團隊對此也有不同看法。」",
+      B:"「目前狀況：低溫時 O 型環可能無法有效密封，過去也出現過侵蝕紀錄。我建議延後發射，因為工程團隊的分析尚未排除低溫風險，現有資料也不足以證明安全。請決策者確認是否延後，並決定需要補充哪些測試。」",
+      C:"「我認為目前的發射條件不能被接受。」",
+      D:"「O 型環有侵蝕、溫度資料有好幾組、Thiokol 那邊的意見跟 Marshall 的不太一樣，之前的準備報告也要看，附件都有，大家看一下，我覺得應該還是……要再想想？」"},
+    good:"B",
+    feedback:{
+      A:"狀況描述得很清楚，但沒有說明如果不處理會發生什麼事。讀的人知道有問題，卻感受不到需要立刻行動的理由。",
+      B:"狀況、立場、論點、證據與訴求都講清楚了。決策者知道現在的情況、報告者建議什麼、為什麼建議，以及自己要判斷什麼。",
+      C:"立場很明確，但沒有說明理由與證據。決策者無法檢驗這個結論，只能選擇相信或不相信。",
+      D:"資訊很多，但沒有結構，立場、證據與訴求混在一起。讀的人要花很大力氣才能找到重點，甚至不確定報告者到底要什麼。"},
+    take:"表達不是把話說得很有把握，而是讓對方看清楚狀況、你的立場、你的理由，以及他需要做什麼決定。", note:"註：此情境改編自 1986 年挑戰者號事故的決策過程。" }
+];
+const Q2 = ["很有幫助","有一點幫助","不太確定","沒有幫助"];
+const Q3 = ["研究或專題的方向判斷","寫報告、做簡報、講解成果","團隊合作與溝通","求職面試","日常做決定"];
+const SEGS = ["問卷","目標","邏輯","表達","結果"];
+
+const state = { screen:"intro", q1:"", q2:null, q3:[], picks:[null,null,null] };
+const app = document.getElementById("app");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const LETTERS = ["A","B","C","D","E"];
+
+function segIndex(s){ if(s==="intro") return -1; if(s.startsWith("stage")) return +s.slice(5)+1; if(s==="end") return 5; return 0; }
+function drawStrip(){
+  const i = segIndex(state.screen);
+  document.getElementById("strip").innerHTML = SEGS.map((n,k)=>`<div class="seg ${k<i?"done":k===i?"now":""}"><i></i>${n}</div>`).join("");
+}
+function go(s){ state.screen=s; render(); window.scrollTo({top:0}); }
+
+/* ---------- word cloud storage ---------- */
+function localWords(){ try{ return JSON.parse(localStorage.getItem("lft-words")||"[]"); }catch(e){ return []; } }
+function saveLocalWord(w){ try{ const a=localWords(); a.push(w); localStorage.setItem("lft-words", JSON.stringify(a.slice(-300))); }catch(e){} }
+async function remoteWords(){
+  if(!CONFIG.endpoint) return null;
+  try{ const r = await fetch(CONFIG.endpoint+"?q=words"); const j = await r.json(); return Array.isArray(j.words)?j.words:null; }catch(e){ return null; }
+}
+async function submit(){
+  if(!CONFIG.endpoint) return;
+  try{ await fetch(CONFIG.endpoint,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},
+    body:JSON.stringify({q1:state.q1,q2:state.q2,q3:state.q3,picks:state.picks})}); }catch(e){}
+}
+function tokens(list){
+  const count = new Map();
+  list.forEach(a => String(a).split(/[，,、。；;\s\/]+/).map(t=>t.trim()).filter(t=>t && t.length<=20).forEach(t=>count.set(t,(count.get(t)||0)+1)));
+  return [...count.entries()].sort((a,b)=>b[1]-a[1]).slice(0,40);
+}
+
+/* ---------- screens ---------- */
+const screens = {
+  intro(){
+    return `<div class="sheet">
+      <span class="eyebrow">思辨實驗室</span>
+      <h1>思辨，也是<span class="mark">工程師</span>的工具！</h1>
+      <p class="muted" style="font-size:18px">真的假的？思辨能幫到什麼？</p>
+      <div class="chips"><span class="chip">3 個小情境</span><span class="chip">約 3 分鐘</span><span class="chip">Made from Lead For Taiwan</span></div>
+      <button class="btn" id="start">開始</button>
+    </div>`;
+  },
+  q1(){
+    return `<div class="sheet">
+      <p class="muted">在正式進入情境時，我們想知道對於現在的你而言……（沒有標準答案，選你所想即可！）</p>
+      <div class="field">
+        <label for="q1">Q1. 你覺得「思辨」是什麼？</label>
+        <input type="text" id="q1" maxlength="40" placeholder="例如：想清楚再做決定" value="${esc(state.q1)}" autocomplete="off">
+        <span class="hint">用一句話簡答或寫上關鍵字即可！多個關鍵字可用逗號分開。</span>
+      </div>
+      <button class="btn" id="q1next" ${state.q1.trim()?"":"disabled"}>送出，看看大家怎麼想</button>
+    </div>`;
+  },
+  cloud(){
+    return `<div class="sheet">
+      <span class="eyebrow">Q1 · 文字雲</span>
+      <h2>大家心中的「思辨」</h2>
+      <div class="cloud" id="cloud"><span class="muted" style="font-size:14px">整理回答中…</span></div>
+      <p class="hint" id="cloudcap"></p>
+      <button class="btn" id="cloudnext">下一題</button>
+    </div>`;
+  },
+  q23(){
+    return `<div class="sheet">
+      <div class="field"><label>Q2. 你覺得思辨能力對理工科有幫助嗎？<span class="hint">（單選）</span></label>
+        <div class="opts">${Q2.map((t,i)=>`<button class="opt" data-q2="${i}" aria-pressed="${state.q2===t}"><b>${LETTERS[i]}</b><span>${t}</span></button>`).join("")}</div></div>
+      <div class="field"><label>Q3. 你覺得思辨最可能在哪方面幫到你？<span class="hint">（可複選）</span></label>
+        <div class="opts">${Q3.map((t,i)=>`<button class="opt" data-q3="${i}" aria-pressed="${state.q3.includes(t)}"><b>${LETTERS[i]}</b><span>${t}</span></button>`).join("")}</div></div>
+      <button class="btn" id="q23next" ${state.q2?"":"disabled"}>進入第一個情境</button>
+    </div>`;
+  },
+  stage(i){
+    const s = STAGES[i], pick = state.picks[i];
+    const opts = Object.entries(s.options).map(([k,t])=>{
+      let cls = "";
+      if(pick){ cls = k===pick ? (k===s.good?"good":"bad") : (k===s.good?"good dim":"dim"); }
+      return `<button class="opt ${cls}" data-pick="${k}" ${pick?"disabled":""}><b>${k}</b><span>${esc(t)}</span></button>`;
+    }).join("");
+    let result = "";
+    if(pick){
+      const ok = pick===s.good;
+      result = `<div class="verdict ${ok?"good":"bad"}">
+          <span class="stamp">${ok?"✓ 好的做法":"△ 可以更好"} · 你選了 ${pick}</span>
+          <p>${esc(s.feedback[pick])}</p></div>
+        <details><summary>看看其他選項會怎樣</summary><div class="compare">
+          ${Object.keys(s.options).filter(k=>k!==pick).map(k=>`<div class="row ${k===s.good?"good":"bad"}"><b>${k}</b><div>${esc(s.feedback[k])}</div></div>`).join("")}
+        </div></details>
+        <p class="take"><span class="mark">${esc(s.take)}</span></p>
+        ${s.note?`<p class="note">${esc(s.note)}</p>`:""}
+        <button class="btn" id="stagenext">${i<2?"繼續第"+["二","三"][i]+"關":"看看結果"}</button>`;
+    }
+    return `<div class="sheet">
+      <span class="eyebrow">情境 ${i+1} / 3 · ${s.tag}</span>
+      <h2>${esc(s.title)}</h2>
+      <p>${esc(s.scenario)}</p>
+      ${s.question?`<p><strong>${esc(s.question)}</strong></p>`:""}
+      <div class="opts">${opts}</div>
+      ${result}
+    </div>`;
+  },
+  end(){
+    const score = state.picks.filter((p,i)=>p===STAGES[i].good).length;
+    return `<div class="sheet">
+      <span class="eyebrow">結果 · ${score} / 3 個情境選到好的做法</span>
+      <h1>思辨，不是<span class="mark">文組的專利</span></h1>
+    </div>
+    <div class="cards" style="margin-top:16px">
+      <div class="card"><span class="k">目標</span><h3>做事前先問：我要解決的是什麼？哪個指標最能代表成功？</h3><p>你在關卡一學到，先錨定目標，時間才會投入在真正影響結果的地方。</p></div>
+      <div class="card"><span class="k">邏輯</span><h3>看到結論時，先檢查前提：這個推論還成立嗎？條件改變了沒有？</h3><p>你在關卡二看到，沒有出事不等於安全，前提改變時，結論也要重新檢查。</p></div>
+      <div class="card"><span class="k">表達</span><h3>寫給別人看的內容，要讓對方看清楚狀況、你的立場、你的理由，以及他需要做什麼決定。</h3><p>你在關卡三看到，同一件事，有的寫法能推動決策，有的寫法只會讓人困惑。</p></div>
+    </div>
+    <div class="sheet" style="margin-top:16px">
+      <p class="take">思辨不只是文組的事。工程師每天都在做目標判斷、檢查前提、與人溝通，這些正是思辨在做的事。</p>
+      <div class="actions"><button class="btn ghost" id="share">分享這個體驗</button><button class="btn" id="home">回到首頁</button></div>
+      <p class="toast" id="toast"></p>
+    </div>
+    <div class="sources" style="margin-top:16px">
+      <strong>資料來源</strong>
+      <a href="https://www.nasa.gov/history/rogersrep/v1ch5.htm" target="_blank" rel="noopener">NASA, Rogers Commission Report, Chapter V</a>
+      <a href="https://centennialofflight.net/essay/SPACEFLIGHT/challenger/SP26.htm" target="_blank" rel="noopener">U.S. Centennial of Flight Commission, The Challenger Accident</a>
+      <span>Leveson, N. G., &amp; Turner, C. S. (1993). An Investigation of the Therac-25 Accidents. IEEE Computer, 26(7), 18–41.</span>
+      <span>Leveson, N. G. (2017). The Therac-25: 30 Years Later. IEEE Computer, 50(11), 8–11.</span>
+      <a href="https://sebokwiki.org/wiki/Medical_Radiation" target="_blank" rel="noopener">SEBoK, Medical Radiation case study</a>
+    </div>`;
+  }
+};
+
+async function fillCloud(){
+  const remote = await remoteWords();
+  const list = remote ? remote.slice() : localWords();
+  if(remote) list.push(state.q1);
+  const mine = new Set(tokens([state.q1]).map(([t])=>t));
+  const toks = tokens(list);
+  const max = Math.max(...toks.map(t=>t[1]),1);
+  const box = document.getElementById("cloud"); if(!box) return;
+  box.innerHTML = "";
+  toks.forEach(([t,n],k)=>{
+    const s = document.createElement("span");
+    s.textContent = t;
+    s.style.fontSize = (15 + 25*(n/max)) + "px";
+    s.style.animationDelay = (k*30)+"ms";
+    if(mine.has(t)) s.className = "me";
+    box.appendChild(s);
+  });
+  document.getElementById("cloudcap").textContent = remote
+    ? `共 ${remote.length+1} 位同學的回答，藍色是你的。`
+    : `目前顯示這台裝置上的 ${list.length} 則回答，藍色是你的。`;
+}
+
+function render(){
+  drawStrip();
+  const s = state.screen;
+  app.innerHTML = s.startsWith("stage") ? screens.stage(+s.slice(5)) : screens[s]();
+  const $ = id => document.getElementById(id);
+  if(s==="intro") $("start").onclick = ()=>go("q1");
+  if(s==="q1"){
+    const inp=$("q1"), b=$("q1next");
+    inp.oninput = ()=>{ state.q1 = inp.value; b.disabled = !inp.value.trim(); };
+    inp.onkeydown = e=>{ if(e.key==="Enter" && inp.value.trim()) b.click(); };
+    b.onclick = ()=>{ state.q1 = inp.value.trim(); saveLocalWord(state.q1); go("cloud"); };
+  }
+  if(s==="cloud"){ fillCloud(); $("cloudnext").onclick = ()=>go("q23"); }
+  if(s==="q23"){
+    app.querySelectorAll("[data-q2]").forEach(el=>el.onclick=()=>{ state.q2 = Q2[+el.dataset.q2]; render(); });
+    app.querySelectorAll("[data-q3]").forEach(el=>el.onclick=()=>{
+      const t = Q3[+el.dataset.q3];
+      state.q3 = state.q3.includes(t) ? state.q3.filter(x=>x!==t) : [...state.q3,t];
+      el.setAttribute("aria-pressed", state.q3.includes(t));
+    });
+    $("q23next").onclick = ()=>{ submit(); go("stage0"); };
+  }
+  if(s.startsWith("stage")){
+    const i = +s.slice(5);
+    app.querySelectorAll("[data-pick]").forEach(el=>el.onclick=()=>{ state.picks[i]=el.dataset.pick; render(); });
+    if($("stagenext")) $("stagenext").onclick = ()=>go(i<2?"stage"+(i+1):"end");
+  }
+  if(s==="end"){
+    $("home").onclick = ()=>{ Object.assign(state,{q1:"",q2:null,q3:[],picks:[null,null,null]}); go("intro"); };
+    $("share").onclick = ()=>{
+      const url = location.href.split("#")[0];
+      const done = msg => { $("toast").textContent = msg; };
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(url).then(()=>done("已複製連結，傳給朋友試試看！"), ()=>done("請直接複製瀏覽器網址分享"));
+      } else done("請直接複製瀏覽器網址分享");
+    };
+  }
+}
+render();
+</script>
+
+</body></html>
